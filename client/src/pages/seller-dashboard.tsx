@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Package, DollarSign, ShoppingBag, Star, Plus, Edit, Trash2 } from "lucide-react";
+import { Package, DollarSign, ShoppingBag, Star, Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -216,13 +216,25 @@ export default function SellerDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {user?.role === "admin" ? "Admin Dashboard" : "Seller Dashboard"}
-            </h1>
-            <p className="text-gray-600 mt-2">
-              {user?.businessName ? `Welcome back, ${user.businessName}` : "Manage your products and sales"}
-            </p>
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {user?.role === "admin" ? "Admin Dashboard" : "Seller Dashboard"}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {user?.businessName ? `Welcome back, ${user.businessName}` : "Manage your products and sales"}
+              </p>
+            </div>
           </div>
           
           <Button onClick={handleCreateProduct} data-testid="button-add-product">

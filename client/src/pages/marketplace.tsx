@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, ShoppingCart as CartIcon } from "lucide-react";
+import { Search, Filter, ShoppingCart as CartIcon, ArrowLeft } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 const categories = [
@@ -54,9 +54,21 @@ export default function MarketplacePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Construction Materials</h1>
-            <p className="text-gray-600 mt-2">Quality materials from verified sellers</p>
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Construction Materials</h1>
+              <p className="text-gray-600 mt-2">Quality materials from verified sellers</p>
+            </div>
           </div>
           
           {user?.role === "buyer" && (

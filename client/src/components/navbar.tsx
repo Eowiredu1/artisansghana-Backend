@@ -18,6 +18,12 @@ export default function Navbar() {
 
   const navigationItems = [
     {
+      label: "Home",
+      href: "/",
+      icon: Hammer,
+      roles: ["buyer", "seller", "client", "admin"],
+    },
+    {
       label: "Browse Materials",
       href: "/marketplace",
       icon: ShoppingCart,
@@ -59,11 +65,12 @@ export default function Navbar() {
           <div className="flex items-center">
             <button
               onClick={() => navigate("/")}
-              className="flex items-center"
+              className="flex items-center hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors"
               data-testid="logo-link"
+              title="Go to Home"
             >
               <Hammer className="text-primary w-8 h-8 mr-2" />
-              <span className="text-xl font-bold text-gray-900">Artisans Market</span>
+              <span className="text-xl font-bold text-gray-900 hover:text-primary transition-colors">Artisans Market</span>
             </button>
           </div>
 
