@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertProductSchema, insertCartItemSchema, insertOrderSchema, insertProjectSchema, insertMilestoneSchema, insertProgressImageSchema } from "@shared/schema";
+import { insertProductSchema, insertCartItemSchema, insertOrderSchema, insertProjectSchema, insertMilestoneSchema, insertProgressImageSchema, insertProjectInventorySchema, insertProjectExpenseSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -469,6 +469,176 @@ export function registerRoutes(app: Express): Server {
       res.json(updatedUser);
     } catch (error) {
       res.status(500).json({ error: "Failed to update role" });
+    }
+  });
+
+  // Project Inventory routes
+  app.get("/api/projects/:projectId/inventory", requireAuth, async (req, res) => {
+    try {
+      const project = await storage.getProject(req.params.projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      if (req.user.role !== "admin" && project.clientId !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      
+      const inventory = await storage.getProjectInventory(req.params.projectId);
+      res.json(inventory);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch inventory" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/inventory", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const inventoryData = {
+        ...req.body,
+        projectId: req.params.projectId,
+      };
+      
+      // Convert date strings to Date objects if provided
+      if (req.body.deliveryDate && req.body.deliveryDate.trim()) {
+        inventoryData.deliveryDate = new Date(req.body.deliveryDate);
+      } else {
+        delete inventoryData.deliveryDate;
+      }
+      
+      const validatedData = insertProjectInventorySchema.parse(inventoryData);
+      const item = await storage.createInventoryItem(validatedData);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Inventory creation error:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "Failed to create inventory item" });
+      }
+    }
+  });
+
+  app.patch("/api/inventory/:id", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const inventoryData = { ...req.body };
+      
+      if (req.body.deliveryDate && req.body.deliveryDate.trim()) {
+        inventoryData.deliveryDate = new Date(req.body.deliveryDate);
+      }
+      
+      const item = await storage.updateInventoryItem(req.params.id, inventoryData);
+      if (!item) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update inventory item" });
+    }
+  });
+
+  app.delete("/api/inventory/:id", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const success = await storage.deleteInventoryItem(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete inventory item" });
+    }
+  });
+
+  // Project Expenses routes
+  app.get("/api/projects/:projectId/expenses", requireAuth, async (req, res) => {
+    try {
+      const project = await storage.getProject(req.params.projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      if (req.user.role !== "admin" && project.clientId !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      
+      const expenses = await storage.getProjectExpenses(req.params.projectId);
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch expenses" });
+    }
+  });
+
+  app.get("/api/projects/:projectId/expenses/total", requireAuth, async (req, res) => {
+    try {
+      const project = await storage.getProject(req.params.projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      if (req.user.role !== "admin" && project.clientId !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      
+      const total = await storage.getProjectTotalExpenses(req.params.projectId);
+      res.json({ total });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch total expenses" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/expenses", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const expenseData = {
+        ...req.body,
+        projectId: req.params.projectId,
+      };
+      
+      // Convert date strings to Date objects
+      if (req.body.paymentDate && req.body.paymentDate.trim()) {
+        expenseData.paymentDate = new Date(req.body.paymentDate);
+      } else {
+        expenseData.paymentDate = new Date(); // Default to current date
+      }
+      
+      const validatedData = insertProjectExpenseSchema.parse(expenseData);
+      const expense = await storage.createExpense(validatedData);
+      res.status(201).json(expense);
+    } catch (error) {
+      console.error("Expense creation error:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "Failed to create expense" });
+      }
+    }
+  });
+
+  app.patch("/api/expenses/:id", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const expenseData = { ...req.body };
+      
+      if (req.body.paymentDate && req.body.paymentDate.trim()) {
+        expenseData.paymentDate = new Date(req.body.paymentDate);
+      }
+      
+      const expense = await storage.updateExpense(req.params.id, expenseData);
+      if (!expense) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+      res.json(expense);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update expense" });
+    }
+  });
+
+  app.delete("/api/expenses/:id", requireAuth, requireRole(["client", "admin"]), async (req, res) => {
+    try {
+      const success = await storage.deleteExpense(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete expense" });
     }
   });
 

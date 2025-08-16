@@ -1,9 +1,10 @@
 import { 
-  users, products, cartItems, orders, orderItems, projects, milestones, progressImages,
+  users, products, cartItems, orders, orderItems, projects, milestones, progressImages, projectInventory, projectExpenses,
   type User, type InsertUser, type Product, type InsertProduct, 
   type CartItem, type InsertCartItem, type Order, type InsertOrder,
   type Project, type InsertProject, type Milestone, type InsertMilestone,
-  type ProgressImage, type InsertProgressImage
+  type ProgressImage, type InsertProgressImage, type ProjectInventory, type InsertProjectInventory,
+  type ProjectExpense, type InsertProjectExpense
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, sql } from "drizzle-orm";
@@ -63,6 +64,19 @@ export interface IStorage {
   getProgressImagesByProject(projectId: string): Promise<ProgressImage[]>;
   createProgressImage(image: InsertProgressImage): Promise<ProgressImage>;
   deleteProgressImage(id: string): Promise<boolean>;
+
+  // Project Inventory
+  getProjectInventory(projectId: string): Promise<ProjectInventory[]>;
+  createInventoryItem(item: InsertProjectInventory): Promise<ProjectInventory>;
+  updateInventoryItem(id: string, item: Partial<InsertProjectInventory>): Promise<ProjectInventory | undefined>;
+  deleteInventoryItem(id: string): Promise<boolean>;
+
+  // Project Expenses
+  getProjectExpenses(projectId: string): Promise<ProjectExpense[]>;
+  createExpense(expense: InsertProjectExpense): Promise<ProjectExpense>;
+  updateExpense(id: string, expense: Partial<InsertProjectExpense>): Promise<ProjectExpense | undefined>;
+  deleteExpense(id: string): Promise<boolean>;
+  getProjectTotalExpenses(projectId: string): Promise<number>;
   
   sessionStore: session.SessionStore;
 }
@@ -293,6 +307,54 @@ export class DatabaseStorage implements IStorage {
   async deleteProgressImage(id: string): Promise<boolean> {
     const result = await db.delete(progressImages).where(eq(progressImages.id, id));
     return result.rowCount > 0;
+  }
+
+  // Project Inventory
+  async getProjectInventory(projectId: string): Promise<ProjectInventory[]> {
+    return db.select().from(projectInventory).where(eq(projectInventory.projectId, projectId)).orderBy(desc(projectInventory.createdAt));
+  }
+
+  async createInventoryItem(item: InsertProjectInventory): Promise<ProjectInventory> {
+    const [newItem] = await db.insert(projectInventory).values(item).returning();
+    return newItem;
+  }
+
+  async updateInventoryItem(id: string, itemData: Partial<InsertProjectInventory>): Promise<ProjectInventory | undefined> {
+    const [item] = await db.update(projectInventory).set(itemData).where(eq(projectInventory.id, id)).returning();
+    return item || undefined;
+  }
+
+  async deleteInventoryItem(id: string): Promise<boolean> {
+    const result = await db.delete(projectInventory).where(eq(projectInventory.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Project Expenses
+  async getProjectExpenses(projectId: string): Promise<ProjectExpense[]> {
+    return db.select().from(projectExpenses).where(eq(projectExpenses.projectId, projectId)).orderBy(desc(projectExpenses.createdAt));
+  }
+
+  async createExpense(expense: InsertProjectExpense): Promise<ProjectExpense> {
+    const [newExpense] = await db.insert(projectExpenses).values(expense).returning();
+    return newExpense;
+  }
+
+  async updateExpense(id: string, expenseData: Partial<InsertProjectExpense>): Promise<ProjectExpense | undefined> {
+    const [expense] = await db.update(projectExpenses).set(expenseData).where(eq(projectExpenses.id, id)).returning();
+    return expense || undefined;
+  }
+
+  async deleteExpense(id: string): Promise<boolean> {
+    const result = await db.delete(projectExpenses).where(eq(projectExpenses.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getProjectTotalExpenses(projectId: string): Promise<number> {
+    const result = await db.select({
+      total: sql<number>`SUM(${projectExpenses.amount})::numeric`
+    }).from(projectExpenses).where(eq(projectExpenses.projectId, projectId));
+    
+    return result[0]?.total || 0;
   }
 }
 

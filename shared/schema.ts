@@ -88,6 +88,35 @@ export const progressImages = pgTable("progress_images", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const projectInventory = pgTable("project_inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  itemName: text("item_name").notNull(),
+  description: text("description"),
+  quantity: integer("quantity").notNull().default(0),
+  unit: text("unit").notNull(), // e.g., "bags", "pieces", "meters"
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  supplier: text("supplier"),
+  deliveryDate: timestamp("delivery_date"),
+  status: text("status").default("pending"), // pending, delivered, used
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const projectExpenses = pgTable("project_expenses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  category: text("category").notNull(), // materials, labor, equipment, other
+  paymentMethod: text("payment_method"), // cash, bank_transfer, check
+  vendor: text("vendor"),
+  receiptNumber: text("receipt_number"),
+  paymentDate: timestamp("payment_date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   products: many(products),
@@ -143,6 +172,22 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   milestones: many(milestones),
   progressImages: many(progressImages),
+  inventory: many(projectInventory),
+  expenses: many(projectExpenses),
+}));
+
+export const projectInventoryRelations = relations(projectInventory, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectInventory.projectId],
+    references: [projects.id],
+  }),
+}));
+
+export const projectExpensesRelations = relations(projectExpenses, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectExpenses.projectId],
+    references: [projects.id],
+  }),
 }));
 
 export const milestonesRelations = relations(milestones, ({ one, many }) => ({
@@ -205,6 +250,16 @@ export const insertProgressImageSchema = createInsertSchema(progressImages).omit
   createdAt: true,
 });
 
+export const insertProjectInventorySchema = createInsertSchema(projectInventory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProjectExpenseSchema = createInsertSchema(projectExpenses).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -220,3 +275,7 @@ export type Milestone = typeof milestones.$inferSelect;
 export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
 export type ProgressImage = typeof progressImages.$inferSelect;
 export type InsertProgressImage = z.infer<typeof insertProgressImageSchema>;
+export type ProjectInventory = typeof projectInventory.$inferSelect;
+export type InsertProjectInventory = z.infer<typeof insertProjectInventorySchema>;
+export type ProjectExpense = typeof projectExpenses.$inferSelect;
+export type InsertProjectExpense = z.infer<typeof insertProjectExpenseSchema>;

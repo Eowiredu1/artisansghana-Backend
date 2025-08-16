@@ -12,12 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Calendar, MapPin, Camera, CheckCircle, Clock, Circle, Upload, Trash2, Edit, ArrowLeft } from "lucide-react";
-import type { Project, Milestone, ProgressImage } from "@shared/schema";
+import { Plus, Calendar, MapPin, Camera, CheckCircle, Clock, Circle, Upload, Trash2, Edit, ArrowLeft, Package, DollarSign, TrendingUp } from "lucide-react";
+import type { Project, Milestone, ProgressImage, ProjectInventory, ProjectExpense } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 const projectSchema = z.object({
@@ -34,8 +35,33 @@ const milestoneSchema = z.object({
   dueDate: z.string().optional(),
 });
 
+const inventorySchema = z.object({
+  itemName: z.string().min(1, "Item name is required"),
+  description: z.string().optional(),
+  quantity: z.number().min(0, "Quantity must be 0 or greater"),
+  unit: z.string().min(1, "Unit is required"),
+  unitCost: z.string().optional(),
+  totalCost: z.string().optional(),
+  supplier: z.string().optional(),
+  deliveryDate: z.string().optional(),
+  status: z.string().optional(),
+});
+
+const expenseSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.string().min(1, "Amount is required"),
+  category: z.string().min(1, "Category is required"),
+  paymentMethod: z.string().optional(),
+  vendor: z.string().optional(),
+  receiptNumber: z.string().optional(),
+  paymentDate: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 type ProjectFormData = z.infer<typeof projectSchema>;
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
+type InventoryFormData = z.infer<typeof inventorySchema>;
+type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export default function ProjectDashboard() {
   const { user } = useAuth();
@@ -44,6 +70,8 @@ export default function ProjectDashboard() {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
+  const [showInventoryDialog, setShowInventoryDialog] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -60,6 +88,21 @@ export default function ProjectDashboard() {
 
   const { data: images } = useQuery<ProgressImage[]>({
     queryKey: ["/api/projects", selectedProject?.id, "images"],
+    enabled: !!selectedProject?.id,
+  });
+
+  const { data: inventory } = useQuery<ProjectInventory[]>({
+    queryKey: ["/api/projects", selectedProject?.id, "inventory"],
+    enabled: !!selectedProject?.id,
+  });
+
+  const { data: expenses } = useQuery<ProjectExpense[]>({
+    queryKey: ["/api/projects", selectedProject?.id, "expenses"],
+    enabled: !!selectedProject?.id,
+  });
+
+  const { data: totalExpenses } = useQuery<{ total: number }>({
+    queryKey: ["/api/projects", selectedProject?.id, "expenses", "total"],
     enabled: !!selectedProject?.id,
   });
 
@@ -80,6 +123,35 @@ export default function ProjectDashboard() {
       title: "",
       description: "",
       dueDate: "",
+    },
+  });
+
+  const inventoryForm = useForm<InventoryFormData>({
+    resolver: zodResolver(inventorySchema),
+    defaultValues: {
+      itemName: "",
+      description: "",
+      quantity: 0,
+      unit: "",
+      unitCost: "",
+      totalCost: "",
+      supplier: "",
+      deliveryDate: "",
+      status: "pending",
+    },
+  });
+
+  const expenseForm = useForm<ExpenseFormData>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: {
+      description: "",
+      amount: "",
+      category: "",
+      paymentMethod: "",
+      vendor: "",
+      receiptNumber: "",
+      paymentDate: "",
+      notes: "",
     },
   });
 
@@ -168,6 +240,53 @@ export default function ProjectDashboard() {
     },
   });
 
+  const createInventoryMutation = useMutation({
+    mutationFn: async (data: InventoryFormData) => {
+      const res = await apiRequest("POST", `/api/projects/${selectedProject?.id}/inventory`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", selectedProject?.id, "inventory"] });
+      setShowInventoryDialog(false);
+      inventoryForm.reset();
+      toast({
+        title: "Success",
+        description: "Inventory item added successfully!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: async (data: ExpenseFormData) => {
+      const res = await apiRequest("POST", `/api/projects/${selectedProject?.id}/expenses`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", selectedProject?.id, "expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", selectedProject?.id, "expenses", "total"] });
+      setShowExpenseDialog(false);
+      expenseForm.reset();
+      toast({
+        title: "Success",
+        description: "Expense recorded successfully!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateProject = () => {
     setEditingProject(null);
     projectForm.reset();
@@ -180,6 +299,14 @@ export default function ProjectDashboard() {
 
   const handleMilestoneSubmit = (data: MilestoneFormData) => {
     createMilestoneMutation.mutate(data);
+  };
+
+  const handleInventorySubmit = (data: InventoryFormData) => {
+    createInventoryMutation.mutate(data);
+  };
+
+  const handleExpenseSubmit = (data: ExpenseFormData) => {
+    createExpenseMutation.mutate(data);
   };
 
   const handleUploadImage = () => {
@@ -351,110 +478,314 @@ export default function ProjectDashboard() {
                         )}
                       </div>
                       
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowMilestoneDialog(true)}
-                          data-testid="button-add-milestone"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Milestone
-                        </Button>
-                        <Button
-                          onClick={() => setShowImageDialog(true)}
-                          data-testid="button-upload-image"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          Upload Photo
-                        </Button>
+                      {/* Total Expenses Summary */}
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className="flex items-center text-green-600 font-semibold">
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          Total Spent: ${totalExpenses?.total || 0}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Milestones */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Milestones</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {milestones && milestones.length > 0 ? (
-                      <div className="space-y-4">
-                        {milestones.map((milestone) => (
-                          <div key={milestone.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getMilestoneColor(milestone.status)}`}>
-                              {getMilestoneIcon(milestone.status)}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">{milestone.title}</h4>
-                              {milestone.description && (
-                                <p className="text-gray-600 text-sm mt-1">{milestone.description}</p>
-                              )}
-                              <div className="flex items-center mt-2 space-x-4">
-                                <Badge 
-                                  variant={milestone.status === "completed" ? "default" : "secondary"}
-                                >
-                                  {milestone.status.replace("_", " ")}
-                                </Badge>
-                                {milestone.dueDate && (
-                                  <span className="text-sm text-gray-500">
-                                    Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">No milestones yet</p>
-                        <Button onClick={() => setShowMilestoneDialog(true)}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add First Milestone
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                {/* Tabbed Content */}
+                <Tabs defaultValue="milestones" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="milestones">Milestones</TabsTrigger>
+                    <TabsTrigger value="inventory">
+                      <Package className="w-4 h-4 mr-2" />
+                      Inventory
+                    </TabsTrigger>
+                    <TabsTrigger value="expenses">
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Expenses
+                    </TabsTrigger>
+                    <TabsTrigger value="images">Progress</TabsTrigger>
+                  </TabsList>
 
-                {/* Progress Images */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Progress Photos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {images && images.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {images.map((image) => (
-                          <div key={image.id} className="relative group">
-                            <img
-                              src={image.imageUrl}
-                              alt={image.description || "Progress photo"}
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
-                              <p className="text-white text-sm p-2 opacity-0 group-hover:opacity-100 text-center">
-                                {image.description}
-                              </p>
-                            </div>
-                            <div className="absolute bottom-2 left-2 text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
-                              {new Date(image.createdAt!).toLocaleDateString()}
-                            </div>
+                  {/* Milestones Tab */}
+                  <TabsContent value="milestones">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>Milestones</CardTitle>
+                          <Button
+                            onClick={() => setShowMilestoneDialog(true)}
+                            size="sm"
+                            data-testid="button-add-milestone"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Milestone
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {milestones && milestones.length > 0 ? (
+                          <div className="space-y-4">
+                            {milestones.map((milestone) => (
+                              <div
+                                key={milestone.id}
+                                className="flex items-center justify-between p-4 border rounded-lg"
+                                data-testid={`milestone-${milestone.id}`}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  {getMilestoneIcon(milestone.status)}
+                                  <div>
+                                    <h4 className="font-medium">{milestone.title}</h4>
+                                    {milestone.description && (
+                                      <p className="text-sm text-gray-600">{milestone.description}</p>
+                                    )}
+                                    {milestone.dueDate && (
+                                      <p className="text-xs text-gray-500 flex items-center mt-1">
+                                        <Calendar className="w-3 h-3 mr-1" />
+                                        Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <Badge variant={milestone.status === "completed" ? "default" : "secondary"}>
+                                  {milestone.status}
+                                </Badge>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">No progress photos yet</p>
-                        <Button onClick={() => setShowImageDialog(true)}>
-                          <Camera className="w-4 h-4 mr-2" />
-                          Upload First Photo
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                        ) : (
+                          <div className="text-center py-12">
+                            <Circle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-4">No milestones yet</p>
+                            <Button onClick={() => setShowMilestoneDialog(true)}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add First Milestone
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Inventory Tab */}
+                  <TabsContent value="inventory">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>Site Inventory</CardTitle>
+                          <Button
+                            onClick={() => setShowInventoryDialog(true)}
+                            size="sm"
+                            data-testid="button-add-inventory"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Item
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {inventory && inventory.length > 0 ? (
+                          <div className="space-y-4">
+                            {inventory.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between p-4 border rounded-lg"
+                                data-testid={`inventory-${item.id}`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">{item.itemName}</h4>
+                                    <Badge variant={item.status === "delivered" ? "default" : "secondary"}>
+                                      {item.status}
+                                    </Badge>
+                                  </div>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                  )}
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
+                                    <div>
+                                      <span className="text-gray-500">Quantity:</span>
+                                      <span className="ml-1 font-medium">{item.quantity} {item.unit}</span>
+                                    </div>
+                                    {item.unitCost && (
+                                      <div>
+                                        <span className="text-gray-500">Unit Cost:</span>
+                                        <span className="ml-1 font-medium">${item.unitCost}</span>
+                                      </div>
+                                    )}
+                                    {item.totalCost && (
+                                      <div>
+                                        <span className="text-gray-500">Total:</span>
+                                        <span className="ml-1 font-medium">${item.totalCost}</span>
+                                      </div>
+                                    )}
+                                    {item.supplier && (
+                                      <div>
+                                        <span className="text-gray-500">Supplier:</span>
+                                        <span className="ml-1 font-medium">{item.supplier}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {item.deliveryDate && (
+                                    <p className="text-xs text-gray-500 flex items-center mt-2">
+                                      <Calendar className="w-3 h-3 mr-1" />
+                                      Delivery: {new Date(item.deliveryDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-12">
+                            <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-4">No inventory items yet</p>
+                            <Button onClick={() => setShowInventoryDialog(true)}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add First Item
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Expenses Tab */}
+                  <TabsContent value="expenses">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>Project Expenses</CardTitle>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-lg font-semibold text-green-600">
+                              Total: ${totalExpenses?.total || 0}
+                            </div>
+                            <Button
+                              onClick={() => setShowExpenseDialog(true)}
+                              size="sm"
+                              data-testid="button-add-expense"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Expense
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {expenses && expenses.length > 0 ? (
+                          <div className="space-y-4">
+                            {expenses.map((expense) => (
+                              <div
+                                key={expense.id}
+                                className="flex items-center justify-between p-4 border rounded-lg"
+                                data-testid={`expense-${expense.id}`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">{expense.description}</h4>
+                                    <div className="text-lg font-semibold text-green-600">
+                                      ${expense.amount}
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
+                                    <div>
+                                      <span className="text-gray-500">Category:</span>
+                                      <span className="ml-1 font-medium capitalize">{expense.category}</span>
+                                    </div>
+                                    {expense.vendor && (
+                                      <div>
+                                        <span className="text-gray-500">Vendor:</span>
+                                        <span className="ml-1 font-medium">{expense.vendor}</span>
+                                      </div>
+                                    )}
+                                    {expense.paymentMethod && (
+                                      <div>
+                                        <span className="text-gray-500">Payment:</span>
+                                        <span className="ml-1 font-medium capitalize">{expense.paymentMethod}</span>
+                                      </div>
+                                    )}
+                                    {expense.receiptNumber && (
+                                      <div>
+                                        <span className="text-gray-500">Receipt:</span>
+                                        <span className="ml-1 font-medium">{expense.receiptNumber}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center justify-between mt-2">
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Calendar className="w-3 h-3 mr-1" />
+                                      {new Date(expense.paymentDate).toLocaleDateString()}
+                                    </p>
+                                    {expense.notes && (
+                                      <p className="text-xs text-gray-600 italic">{expense.notes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-12">
+                            <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-4">No expenses recorded yet</p>
+                            <Button onClick={() => setShowExpenseDialog(true)}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Record First Expense
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Progress Images Tab */}
+                  <TabsContent value="images">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>Progress Images</CardTitle>
+                          <Button
+                            onClick={() => setShowImageDialog(true)}
+                            size="sm"
+                            data-testid="button-upload-image"
+                          >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Upload Image
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {images && images.length > 0 ? (
+                          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {images.map((image) => (
+                              <div key={image.id} className="border rounded-lg overflow-hidden">
+                                <img
+                                  src={image.imageUrl}
+                                  alt={image.description || "Progress image"}
+                                  className="w-full h-48 object-cover"
+                                />
+                                <div className="p-3">
+                                  {image.description && (
+                                    <p className="text-sm text-gray-600 mb-2">{image.description}</p>
+                                  )}
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(image.createdAt!).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-12">
+                            <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-4">No progress images yet</p>
+                            <Button onClick={() => setShowImageDialog(true)}>
+                              <Camera className="w-4 h-4 mr-2" />
+                              Upload First Image
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </div>
             ) : (
               <Card>
@@ -661,6 +992,282 @@ export default function ProjectDashboard() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Inventory Dialog */}
+      <Dialog open={showInventoryDialog} onOpenChange={setShowInventoryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Inventory Item</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={inventoryForm.handleSubmit(handleInventorySubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="item-name">Item Name</Label>
+                <Input
+                  id="item-name"
+                  {...inventoryForm.register("itemName")}
+                  data-testid="input-item-name"
+                />
+                {inventoryForm.formState.errors.itemName && (
+                  <p className="text-sm text-red-600 mt-1">{inventoryForm.formState.errors.itemName.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="item-quantity">Quantity</Label>
+                <Input
+                  id="item-quantity"
+                  type="number"
+                  {...inventoryForm.register("quantity", { valueAsNumber: true })}
+                  data-testid="input-item-quantity"
+                />
+                {inventoryForm.formState.errors.quantity && (
+                  <p className="text-sm text-red-600 mt-1">{inventoryForm.formState.errors.quantity.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="item-unit">Unit</Label>
+                <Input
+                  id="item-unit"
+                  {...inventoryForm.register("unit")}
+                  placeholder="e.g., kg, pieces, liters"
+                  data-testid="input-item-unit"
+                />
+                {inventoryForm.formState.errors.unit && (
+                  <p className="text-sm text-red-600 mt-1">{inventoryForm.formState.errors.unit.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="item-status">Status</Label>
+                <Select 
+                  onValueChange={(value) => inventoryForm.setValue("status", value)}
+                  defaultValue="pending"
+                >
+                  <SelectTrigger data-testid="select-item-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="ordered">Ordered</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="used">Used</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="item-description">Description</Label>
+              <Textarea
+                id="item-description"
+                {...inventoryForm.register("description")}
+                data-testid="input-item-description"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="unit-cost">Unit Cost ($)</Label>
+                <Input
+                  id="unit-cost"
+                  {...inventoryForm.register("unitCost")}
+                  placeholder="0.00"
+                  data-testid="input-unit-cost"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="total-cost">Total Cost ($)</Label>
+                <Input
+                  id="total-cost"
+                  {...inventoryForm.register("totalCost")}
+                  placeholder="0.00"
+                  data-testid="input-total-cost"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="supplier">Supplier</Label>
+                <Input
+                  id="supplier"
+                  {...inventoryForm.register("supplier")}
+                  data-testid="input-supplier"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="delivery-date">Delivery Date</Label>
+                <Input
+                  id="delivery-date"
+                  type="date"
+                  {...inventoryForm.register("deliveryDate")}
+                  data-testid="input-delivery-date"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowInventoryDialog(false)}
+                data-testid="button-cancel-inventory"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createInventoryMutation.isPending}
+                data-testid="button-save-inventory"
+              >
+                Add Item
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expense Dialog */}
+      <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Record Expense</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={expenseForm.handleSubmit(handleExpenseSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="expense-description">Description</Label>
+              <Input
+                id="expense-description"
+                {...expenseForm.register("description")}
+                data-testid="input-expense-description"
+              />
+              {expenseForm.formState.errors.description && (
+                <p className="text-sm text-red-600 mt-1">{expenseForm.formState.errors.description.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="expense-amount">Amount ($)</Label>
+                <Input
+                  id="expense-amount"
+                  {...expenseForm.register("amount")}
+                  placeholder="0.00"
+                  data-testid="input-expense-amount"
+                />
+                {expenseForm.formState.errors.amount && (
+                  <p className="text-sm text-red-600 mt-1">{expenseForm.formState.errors.amount.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="expense-category">Category</Label>
+                <Select onValueChange={(value) => expenseForm.setValue("category", value)}>
+                  <SelectTrigger data-testid="select-expense-category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="materials">Materials</SelectItem>
+                    <SelectItem value="labor">Labor</SelectItem>
+                    <SelectItem value="equipment">Equipment</SelectItem>
+                    <SelectItem value="transportation">Transportation</SelectItem>
+                    <SelectItem value="permits">Permits</SelectItem>
+                    <SelectItem value="utilities">Utilities</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                {expenseForm.formState.errors.category && (
+                  <p className="text-sm text-red-600 mt-1">{expenseForm.formState.errors.category.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="vendor">Vendor</Label>
+                <Input
+                  id="vendor"
+                  {...expenseForm.register("vendor")}
+                  data-testid="input-vendor"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="payment-method">Payment Method</Label>
+                <Select onValueChange={(value) => expenseForm.setValue("paymentMethod", value)}>
+                  <SelectTrigger data-testid="select-payment-method">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="debit_card">Debit Card</SelectItem>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="receipt-number">Receipt Number</Label>
+                <Input
+                  id="receipt-number"
+                  {...expenseForm.register("receiptNumber")}
+                  data-testid="input-receipt-number"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="payment-date">Payment Date</Label>
+                <Input
+                  id="payment-date"
+                  type="date"
+                  {...expenseForm.register("paymentDate")}
+                  data-testid="input-payment-date"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="expense-notes">Notes</Label>
+              <Textarea
+                id="expense-notes"
+                {...expenseForm.register("notes")}
+                data-testid="input-expense-notes"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowExpenseDialog(false)}
+                data-testid="button-cancel-expense"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createExpenseMutation.isPending}
+                data-testid="button-save-expense"
+              >
+                Record Expense
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
