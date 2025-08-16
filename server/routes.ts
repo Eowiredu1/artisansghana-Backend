@@ -62,8 +62,9 @@ export function registerRoutes(app: Express): Server {
       const { search, category } = req.query;
       let products;
       
-      if (search) {
-        products = await storage.searchProducts(search as string, category as string);
+      if (search || category) {
+        // Use search function for both search queries and category filtering
+        products = await storage.searchProducts(search as string || "", category as string);
       } else {
         products = await storage.getAllProducts();
       }

@@ -119,12 +119,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchProducts(query: string, category?: string): Promise<Product[]> {
-    let whereClause = and(
-      eq(products.isActive, true),
-      like(products.name, `%${query}%`)
-    );
+    let whereClause = eq(products.isActive, true);
 
-    if (category) {
+    // Add search filter if query is provided and not empty
+    if (query && query.trim()) {
+      whereClause = and(whereClause, like(products.name, `%${query}%`));
+    }
+
+    // Add category filter if category is provided
+    if (category && category.trim()) {
       whereClause = and(whereClause, eq(products.category, category));
     }
 
