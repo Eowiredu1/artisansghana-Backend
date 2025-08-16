@@ -419,6 +419,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // User role update route
+  app.patch("/api/user/role", requireAuth, async (req, res) => {
+    try {
+      const { role } = req.body;
+      
+      // Validate role
+      if (!["buyer", "seller", "client"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role. Must be buyer, seller, or client" });
+      }
+      
+      // Update user role
+      const updatedUser = await storage.updateUser(req.user.id, { role });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update session
+      req.user.role = role;
+      
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update role" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

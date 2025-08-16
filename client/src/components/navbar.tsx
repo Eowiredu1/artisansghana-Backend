@@ -8,12 +8,18 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Hammer, Menu, User, LogOut, ShoppingCart, Package, FolderOpen, Settings } from "lucide-react";
 
 export default function Navbar() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logoutMutation, switchRoleMutation } = useAuth();
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  const handleRoleSwitch = (newRole: string) => {
+    if (newRole !== user?.role) {
+      switchRoleMutation.mutate({ role: newRole });
+    }
   };
 
   const navigationItems = [
@@ -115,6 +121,28 @@ export default function Navbar() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  
+                  {/* Role Switching Section */}
+                  <div className="px-2 py-2">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Switch Role:</p>
+                    <div className="grid grid-cols-3 gap-1">
+                      {["buyer", "seller", "client"].map((role) => (
+                        <Button
+                          key={role}
+                          variant={user?.role === role ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-6"
+                          onClick={() => handleRoleSwitch(role)}
+                          disabled={switchRoleMutation.isPending}
+                          data-testid={`switch-role-${role}`}
+                        >
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  
                   {visibleItems.map((item) => (
                     <DropdownMenuItem
                       key={item.href}

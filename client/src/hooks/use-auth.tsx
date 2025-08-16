@@ -15,6 +15,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  switchRoleMutation: UseMutationResult<SelectUser, Error, { role: string }>;
 };
 
 type LoginData = Pick<InsertUser, "username" | "password">;
@@ -96,6 +97,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const switchRoleMutation = useMutation({
+    mutationFn: async ({ role }: { role: string }) => {
+      const res = await apiRequest("PATCH", "/api/user/role", { role });
+      return await res.json();
+    },
+    onSuccess: (updatedUser: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], updatedUser);
+      toast({
+        title: "Role switched!",
+        description: `You are now acting as a ${updatedUser.role}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Role switch failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <AuthContext.Provider
       value={{
@@ -105,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        switchRoleMutation,
       }}
     >
       {children}
