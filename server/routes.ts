@@ -286,11 +286,39 @@ export function registerRoutes(app: Express): Server {
         ...req.body,
         clientId: req.user.id,
       };
+      
+      // Convert date strings to Date objects if provided
+      if (req.body.startDate && req.body.startDate.trim()) {
+        projectData.startDate = new Date(req.body.startDate);
+      } else {
+        delete projectData.startDate;
+      }
+      
+      if (req.body.endDate && req.body.endDate.trim()) {
+        projectData.endDate = new Date(req.body.endDate);
+      } else {
+        delete projectData.endDate;
+      }
+      
+      // Remove empty strings to use defaults
+      if (!projectData.description || projectData.description.trim() === '') {
+        delete projectData.description;
+      }
+      if (!projectData.location || projectData.location.trim() === '') {
+        delete projectData.location;
+      }
+      
+      console.log("Project data to validate:", projectData);
       const validatedData = insertProjectSchema.parse(projectData);
       const project = await storage.createProject(validatedData);
       res.status(201).json(project);
     } catch (error) {
-      res.status(400).json({ error: "Failed to create project" });
+      console.error("Project creation error:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "Failed to create project" });
+      }
     }
   });
 
