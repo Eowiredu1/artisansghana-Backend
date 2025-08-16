@@ -39,16 +39,27 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
   const queryClient = useQueryClient();
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const { data: cartItems, isLoading } = useQuery<CartItemWithProduct[]>({
+  // Fetch cart items first
+  const { data: rawCartItems, isLoading: cartLoading } = useQuery<CartItem[]>({
     queryKey: ["/api/cart"],
     enabled: isOpen && !!user,
-    select: async (items: CartItem[]) => {
-      // Fetch product details for each cart item
+  });
+
+  // Fetch products for cart items
+  const { data: cartItems, isLoading: productsLoading } = useQuery<CartItemWithProduct[]>({
+    queryKey: ["/api/cart", "with-products", rawCartItems?.map(item => item.productId)],
+    enabled: !!(rawCartItems && rawCartItems.length > 0),
+    queryFn: async () => {
+      if (!rawCartItems || rawCartItems.length === 0) return [];
+      
       const itemsWithProducts = await Promise.all(
-        items.map(async (item) => {
+        rawCartItems.map(async (item) => {
           const response = await fetch(`/api/products/${item.productId}`, {
             credentials: "include",
           });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch product ${item.productId}`);
+          }
           const product = await response.json();
           return { ...item, product };
         })
@@ -56,6 +67,11 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
       return itemsWithProducts;
     },
   });
+
+  // Handle empty cart case
+  const finalCartItems = rawCartItems?.length === 0 ? [] : cartItems;
+
+  const isLoading = cartLoading || productsLoading;
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -106,7 +122,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
   const checkoutMutation = useMutation({
     mutationFn: async (data: CheckoutFormData) => {
-      const items = cartItems?.map(item => ({
+      const items = finalCartItems?.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
       })) || [];
@@ -148,10 +164,10 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
     checkoutMutation.mutate(data);
   };
 
-  const subtotal = cartItems?.reduce(
+  const subtotal = (finalCartItems && Array.isArray(finalCartItems)) ? finalCartItems.reduce(
     (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
     0
-  ) || 0;
+  ) : 0;
 
   const tax = subtotal * 0.08; // 8% tax
   const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
@@ -187,7 +203,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                     </div>
                   ))}
                 </div>
-              ) : !cartItems || cartItems.length === 0 ? (
+              ) : !finalCartItems || finalCartItems.length === 0 ? (
                 <div className="text-center py-12">
                   <CartIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">Your cart is empty</p>
@@ -195,7 +211,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cartItems.map((item) => (
+                  {finalCartItems.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center space-x-4 p-4 border rounded-lg"
