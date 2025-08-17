@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisans Market - Construction Materials Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        },
+                        secondary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="font-inter bg-gray-50">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-hammer text-primary-500 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Artisans Market</span>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#browse" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors">Browse Materials</a>
+                    <a href="#sellers" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors">For Sellers</a>
+                    <a href="#projects" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors">Project Management</a>
+                    <a href="#about" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors">About</a>
+                </nav>
+
+                <!-- Auth Buttons -->
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:handleLogin">
+                        Sign In
+                    </button>
+                    <button class="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors" data-event="click:handleSignup">
+                        Get Started
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button class="text-gray-700 hover:text-primary-500 p-2">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: Hero Section -->
+    <section class="relative bg-gradient-to-br from-secondary-800 via-secondary-700 to-secondary-600 text-white">
+        <!-- Construction site background with overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+        <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&h=1080'); background-size: cover; background-position: center; opacity: 0.3;"></div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+            <div class="max-w-3xl">
+                <h1 class="text-4xl lg:text-6xl font-bold leading-tight mb-6">
+                    The Complete Construction Materials Marketplace
+                </h1>
+                <p class="text-xl lg:text-2xl text-gray-200 mb-8 leading-relaxed">
+                    Connect buyers, sellers, and project managers in one powerful platform. Source quality materials, manage projects, and track progress seamlessly.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button class="bg-primary-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-600 transition-all transform hover:scale-105 shadow-lg" data-event="click:handleBrowseMaterials">
+                        Browse Materials
+                    </button>
+                    <button class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-secondary-800 transition-all" data-event="click:handleBecomeseller">
+                        Become a Seller
+                    </button>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex flex-wrap gap-8 mt-12 pt-8 border-t border-white border-opacity-20">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary-300" data-bind="stats.materials">12,500+</div>
+                        <div class="text-sm text-gray-300">Materials Listed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary-300" data-bind="stats.sellers">2,800+</div>
+                        <div class="text-sm text-gray-300">Verified Sellers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary-300" data-bind="stats.projects">1,200+</div>
+                        <div class="text-sm text-gray-300">Active Projects</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Hero Section -->
+
+    <!-- @COMPONENT: User Role Cards -->
+    <section id="roles" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Built for Every Role in Construction</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Whether you're buying materials, selling products, or managing projects, our platform has the tools you need.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
+                <!-- Buyer Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
+                    <div class="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-shopping-cart text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Buyers</h3>
+                    <ul class="text-gray-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Browse materials catalog</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Advanced search & filters</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Shopping cart & checkout</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Order tracking</li>
+                    </ul>
+                    <button class="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors" data-event="click:handleBuyerSignup">
+                        Start Buying
+                    </button>
+                </div>
+
+                <!-- Seller Card -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
+                    <div class="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-store text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Sellers</h3>
+                    <ul class="text-gray-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Product listing & images</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Inventory management</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Sales dashboard</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Order fulfillment</li>
+                    </ul>
+                    <button class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors" data-event="click:handleSellerSignup">
+                        Start Selling
+                    </button>
+                </div>
+
+                <!-- Client Card -->
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
+                    <div class="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-project-diagram text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Clients</h3>
+                    <ul class="text-gray-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Project creation</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Milestone tracking</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Progress images</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Remote monitoring</li>
+                    </ul>
+                    <button class="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors" data-event="click:handleClientSignup">
+                        Manage Projects
+                    </button>
+                </div>
+
+                <!-- Admin Card -->
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
+                    <div class="bg-primary-500 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-cog text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Admins</h3>
+                    <ul class="text-gray-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>User management</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Product oversight</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Analytics dashboard</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 text-sm mr-2"></i>Platform control</li>
+                    </ul>
+                    <button class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors" data-event="click:handleAdminAccess">
+                        Admin Access
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: User Role Cards -->
+
+    <!-- @COMPONENT: Featured Materials -->
+    <section id="browse" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Featured Materials</h2>
+                    <p class="text-xl text-gray-600">Quality construction materials from verified sellers</p>
+                </div>
+                <button class="bg-primary-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors" data-event="click:handleViewAllMaterials">
+                    View All Materials
+                </button>
+            </div>
+
+            <!-- Material Categories -->
+            <div class="flex flex-wrap gap-4 mb-12">
+                <button class="bg-white border-2 border-primary-500 text-primary-500 px-6 py-2 rounded-full font-medium hover:bg-primary-500 hover:text-white transition-all" data-active="true">
+                    All Categories
+                </button>
+                <button class="bg-white border border-gray-300 text-gray-600 px-6 py-2 rounded-full font-medium hover:border-primary-500 hover:text-primary-500 transition-all">
+                    Concrete & Cement
+                </button>
+                <button class="bg-white border border-gray-300 text-gray-600 px-6 py-2 rounded-full font-medium hover:border-primary-500 hover:text-primary-500 transition-all">
+                    Steel & Metal
+                </button>
+                <button class="bg-white border border-gray-300 text-gray-600 px-6 py-2 rounded-full font-medium hover:border-primary-500 hover:text-primary-500 transition-all">
+                    Wood & Timber
+                </button>
+                <button class="bg-white border border-gray-300 text-gray-600 px-6 py-2 rounded-full font-medium hover:border-primary-500 hover:text-primary-500 transition-all">
+                    Tools & Equipment
+                </button>
+            </div>
+
+            <!-- Material Grid -->
+            <!-- @MAP: featuredMaterials.map(material => ( -->
+            <div class="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                    <!-- High-quality steel rebar for construction reinforcement -->
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" alt="Steel rebar construction materials" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900" data-bind="material.name">Steel Rebar #4</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">In Stock</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="material.description">High-grade steel reinforcement bar, 20ft length</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-2xl font-bold text-primary-500" data-bind="material.price">$24.99</div>
+                            <div class="text-sm text-gray-500" data-bind="material.unit">per piece</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span data-bind="material.rating">4.8</span>
+                                <span class="mx-1">·</span>
+                                <span data-bind="material.reviews">142 reviews</span>
+                            </div>
+                        </div>
+                        <button class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors mt-4" data-event="click:handleAddToCart">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                    <!-- Premium quality concrete mix for construction projects -->
+                    <img src="https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" alt="Concrete mix construction material" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900" data-bind="material.name">Premium Concrete Mix</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">In Stock</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="material.description">High-strength concrete mix, 50lb bag</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-2xl font-bold text-primary-500" data-bind="material.price">$6.49</div>
+                            <div class="text-sm text-gray-500" data-bind="material.unit">per bag</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span data-bind="material.rating">4.9</span>
+                                <span class="mx-1">·</span>
+                                <span data-bind="material.reviews">89 reviews</span>
+                            </div>
+                        </div>
+                        <button class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors mt-4" data-event="click:handleAddToCart">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                    <!-- Professional power drill for construction work -->
+                    <img src="https://images.unsplash.com/photo-1572981779307-38b8cabb2407?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" alt="Professional power drill tool" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900" data-bind="material.name">Pro Power Drill</h3>
+                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">Limited</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="material.description">18V cordless drill with battery pack</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-2xl font-bold text-primary-500" data-bind="material.price">$159.99</div>
+                            <div class="text-sm text-gray-500" data-bind="material.unit">per unit</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span data-bind="material.rating">4.7</span>
+                                <span class="mx-1">·</span>
+                                <span data-bind="material.reviews">256 reviews</span>
+                            </div>
+                        </div>
+                        <button class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors mt-4" data-event="click:handleAddToCart">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                    <!-- Premium cedar lumber for construction projects -->
+                    <img src="https://images.unsplash.com/photo-1609010697446-11f2155278f0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" alt="Cedar lumber wood construction material" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900" data-bind="material.name">Cedar Lumber 2x4</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">In Stock</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="material.description">Premium grade cedar, 8ft length</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-2xl font-bold text-primary-500" data-bind="material.price">$12.99</div>
+                            <div class="text-sm text-gray-500" data-bind="material.unit">per board</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span data-bind="material.rating">4.6</span>
+                                <span class="mx-1">·</span>
+                                <span data-bind="material.reviews">78 reviews</span>
+                            </div>
+                        </div>
+                        <button class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors mt-4" data-event="click:handleAddToCart">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_MAP )) -->
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Featured Materials -->
+
+    <!-- @COMPONENT: Seller Dashboard Preview -->
+    <section id="sellers" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Powerful Seller Tools</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Manage your inventory, track sales, and grow your business with our comprehensive seller dashboard.</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 shadow-inner">
+                <!-- Dashboard Preview -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <!-- Dashboard Header -->
+                    <div class="bg-secondary-800 text-white p-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold" data-bind="seller.businessName">ABC Construction Supplies</h3>
+                                <p class="text-secondary-200" data-bind="seller.memberSince">Seller since March 2023</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-bold text-primary-300" data-bind="seller.totalSales">$45,280</div>
+                                <div class="text-secondary-200">Total Sales</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Content -->
+                    <div class="p-6">
+                        <!-- Quick Stats -->
+                        <div class="grid md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-blue-600" data-bind="seller.stats.products">47</div>
+                                        <div class="text-sm text-blue-600">Active Products</div>
+                                    </div>
+                                    <i class="fas fa-box text-blue-500 text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-green-600" data-bind="seller.stats.orders">182</div>
+                                        <div class="text-sm text-green-600">Total Orders</div>
+                                    </div>
+                                    <i class="fas fa-shopping-bag text-green-500 text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-yellow-600" data-bind="seller.stats.pending">12</div>
+                                        <div class="text-sm text-yellow-600">Pending Orders</div>
+                                    </div>
+                                    <i class="fas fa-clock text-yellow-500 text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-purple-600" data-bind="seller.stats.rating">4.8</div>
+                                        <div class="text-sm text-purple-600">Avg. Rating</div>
+                                    </div>
+                                    <i class="fas fa-star text-purple-500 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Management Table -->
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-lg font-semibold text-gray-900">Recent Products</h4>
+                                <button class="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors" data-event="click:handleAddProduct">
+                                    + Add Product
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="text-left text-sm font-medium text-gray-500 border-b">
+                                            <th class="pb-3">Product</th>
+                                            <th class="pb-3">Price</th>
+                                            <th class="pb-3">Stock</th>
+                                            <th class="pb-3">Status</th>
+                                            <th class="pb-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-sm">
+                                        <tr class="border-b">
+                                            <td class="py-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
+                                                    <div>
+                                                        <div class="font-medium" data-bind="product.name">Steel Rebar #4</div>
+                                                        <div class="text-gray-500" data-bind="product.sku">SKU: SR4-001</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 font-semibold" data-bind="product.price">$24.99</td>
+                                            <td class="py-3" data-bind="product.stock">156</td>
+                                            <td class="py-3">
+                                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                                            </td>
+                                            <td class="py-3">
+                                                <button class="text-blue-600 hover:text-blue-800 mr-2" data-event="click:handleEditProduct">Edit</button>
+                                                <button class="text-red-600 hover:text-red-800" data-event="click:handleDeleteProduct">Delete</button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="py-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
+                                                    <div>
+                                                        <div class="font-medium" data-bind="product.name">Concrete Mix</div>
+                                                        <div class="text-gray-500" data-bind="product.sku">SKU: CM-002</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 font-semibold" data-bind="product.price">$6.49</td>
+                                            <td class="py-3" data-bind="product.stock">89</td>
+                                            <td class="py-3">
+                                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                                            </td>
+                                            <td class="py-3">
+                                                <button class="text-blue-600 hover:text-blue-800 mr-2" data-event="click:handleEditProduct">Edit</button>
+                                                <button class="text-red-600 hover:text-red-800" data-event="click:handleDeleteProduct">Delete</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button class="bg-primary-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-600 transition-colors" data-event="click:handleStartSelling">
+                    Start Selling Today
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Seller Dashboard Preview -->
+
+    <!-- @COMPONENT: Project Management Preview -->
+    <section id="projects" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Project Management Made Simple</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Track milestones, upload progress photos, and keep stakeholders informed with our intuitive project management tools.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Project Dashboard Preview -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
+                        <h3 class="text-xl font-bold mb-2" data-bind="project.name">Downtown Office Complex</h3>
+                        <p class="text-purple-200" data-bind="project.location">San Francisco, CA</p>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>Progress</span>
+                                <span data-bind="project.progress">68%</span>
+                            </div>
+                            <div class="w-full bg-purple-500 rounded-full h-2">
+                                <div class="bg-white rounded-full h-2" style="width: 68%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- Milestones -->
+                        <h4 class="font-semibold text-gray-900 mb-4">Recent Milestones</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900" data-bind="milestone.title">Foundation Complete</div>
+                                    <div class="text-sm text-gray-500" data-bind="milestone.date">Completed 3 days ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-clock text-blue-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900" data-bind="milestone.title">Steel Framework</div>
+                                    <div class="text-sm text-gray-500" data-bind="milestone.date">In progress</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-circle text-gray-400 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-500" data-bind="milestone.title">Electrical Installation</div>
+                                    <div class="text-sm text-gray-400" data-bind="milestone.date">Starting next week</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Photos -->
+                        <h4 class="font-semibold text-gray-900 mb-4 mt-6">Latest Photos</h4>
+                        <div class="grid grid-cols-3 gap-3">
+                            <!-- Construction site foundation work progress photo -->
+                            <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200" alt="Foundation construction progress" class="rounded-lg object-cover h-20 w-full" data-mock-image="true">
+                            <!-- Steel framework construction progress -->
+                            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200" alt="Steel framework construction" class="rounded-lg object-cover h-20 w-full" data-mock-image="true">
+                            <!-- Construction site overview with equipment -->
+                            <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200" alt="Construction site overview" class="rounded-lg object-cover h-20 w-full" data-mock-image="true">
+                        </div>
+
+                        <button class="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors mt-6" data-event="click:handleUploadPhoto">
+                            Upload Progress Photo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Features List -->
+                <div>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-tasks text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-900 mb-2">Milestone Tracking</h4>
+                                <p class="text-gray-600">Set project milestones and track completion status. Keep all stakeholders informed about project progress in real-time.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-camera text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-900 mb-2">Progress Documentation</h4>
+                                <p class="text-gray-600">Upload photos and documents to create a visual timeline of your project. Perfect for remote monitoring and reporting.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-globe text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-900 mb-2">Remote Access</h4>
+                                <p class="text-gray-600">Monitor projects from anywhere in the world. Ideal for international clients who need to track construction progress remotely.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-users text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-900 mb-2">Team Collaboration</h4>
+                                <p class="text-gray-600">Invite team members, contractors, and clients to collaborate on projects with role-based access controls.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button class="bg-purple-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-purple-600 transition-colors" data-event="click:handleCreateProject">
+                            Create Your First Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Project Management Preview -->
+
+    <!-- @COMPONENT: Features & Benefits -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Why Choose Artisans Market?</h2>
+                <p class="text-xl text-gray-600">Everything you need to succeed in construction materials trading and project management</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Verified Sellers</h3>
+                    <p class="text-gray-600">All sellers go through our rigorous verification process to ensure quality and reliability.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shipping-fast text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Fast Delivery</h3>
+                    <p class="text-gray-600">Quick and reliable delivery options to keep your projects on schedule.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-headset text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">24/7 Support</h3>
+                    <p class="text-gray-600">Round-the-clock customer support to help you with any questions or issues.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-lock text-orange-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Secure Payments</h3>
+                    <p class="text-gray-600">Industry-leading security measures to protect your transactions and data.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-line text-red-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Analytics Dashboard</h3>
+                    <p class="text-gray-600">Comprehensive analytics and reporting tools for sellers and project managers.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-mobile-alt text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Mobile Optimized</h3>
+                    <p class="text-gray-600">Fully responsive design that works perfectly on all devices and screen sizes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Features & Benefits -->
+
+    <!-- @COMPONENT: Call to Action -->
+    <section class="py-20 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl lg:text-4xl font-bold mb-6">Ready to Transform Your Construction Business?</h2>
+            <p class="text-xl text-primary-100 mb-8 max-w-3xl mx-auto">Join thousands of construction professionals who trust Artisans Market for their materials sourcing and project management needs.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg" data-event="click:handleGetStarted">
+                    Get Started Free
+                </button>
+                <button class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary-600 transition-all" data-event="click:handleScheduleDemo">
+                    Schedule Demo
+                </button>
+            </div>
+
+            <div class="mt-12 flex flex-wrap justify-center gap-8 text-primary-200">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>No setup fees</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Cancel anytime</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Full support included</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Call to Action -->
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
+                <!-- Company Info -->
+                <div>
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-hammer text-primary-500 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold">Artisans Market</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">The complete construction materials marketplace and project management platform.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#browse" class="text-gray-400 hover:text-white transition-colors">Browse Materials</a></li>
+                        <li><a href="#sellers" class="text-gray-400 hover:text-white transition-colors">Become a Seller</a></li>
+                        <li><a href="#projects" class="text-gray-400 hover:text-white transition-colors">Project Management</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API Reference</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact</h3>
+                    <div class="space-y-2 text-gray-400">
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>support@artisansmarket.com</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-phone mr-2"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>San Francisco, CA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="text-gray-400 text-sm">
+                        © 2024 Artisans Market. All rights reserved.
+                    </div>
+                    <div class="flex space-x-6 mt-4 md:mt-0">
+                        <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+                        <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+                        <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <script>
+        (function() {
+            // TODO: Implement business logic, API calls, and state management
+            
+            // Mock interactions for demo purposes
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add click handlers for buttons (demo purposes only)
+                const buttons = document.querySelectorAll('[data-event]');
+                buttons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const action = this.getAttribute('data-event').split(':')[1];
+                        console.log('Action triggered:', action);
+                        // TODO: Implement actual functionality
+                    });
+                });
+
+                // Add hover effects for cards
+                const cards = document.querySelectorAll('.hover\\:shadow-lg');
+                cards.forEach(card => {
+                    card.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-4px)';
+                    });
+                    card.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                    });
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
