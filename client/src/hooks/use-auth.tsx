@@ -1,12 +1,27 @@
-import { createContext, ReactNode, useContext } from "react";
-import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
-} from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+// src/hooks/use-auth.ts
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { UseMutationResult, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+
+// Your app used these types before; we'll keep a minimal shape compatible with your UI.
+type SelectUser = {
+  id: string;
+  email: string | null;
+  username?: string | null;
+  role?: "buyer" | "seller" | "client";
+  businessName?: string | null;
+};
+
+type LoginData = { username: string; password: string };
+type RegisterData = {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: "buyer" | "seller" | "client";
+  businessName?: string;
+};
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -18,127 +33,172 @@ type AuthContextType = {
   switchRoleMutation: UseMutationResult<SelectUser, Error, { role: string }>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
-type RegisterData = InsertUser & { confirmPassword: string };
-
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const {
-    data: user,
-    error,
-    isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
-    queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+  const [user, setUser] = useState<SelectUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hookError, setHookError] = useState<Error | null>(null);
+
+  // Load current session on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const u = data.user;
+        if (u) {
+          setUser({
+            id: u.id,
+            email: u.email,
+            username: (u.user_metadata as any)?.username ?? null,
+            role: (u.user_metadata as any)?.role ?? "buyer",
+            businessName: (u.user_metadata as any)?.businessName ?? null,
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (e: any) {
+        setHookError(e);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+
+    // Listen for auth changes (login/logout)
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user;
+      if (u) {
+        setUser({
+          id: u.id,
+          email: u.email,
+          username: (u.user_metadata as any)?.username ?? null,
+          role: (u.user_metadata as any)?.role ?? "buyer",
+          businessName: (u.user_metadata as any)?.businessName ?? null,
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const loginMutation = useMutation<SelectUser, Error, LoginData>({
+    mutationFn: async ({ username, password }) => {
+      // We sign in with email, but your UI collects "username".
+      // For a simple start, treat "username" as email.
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password,
+      });
+      if (error) throw new Error(error.message);
+      const u = data.user!;
+      return {
+        id: u.id,
+        email: u.email,
+        username: (u.user_metadata as any)?.username ?? null,
+        role: (u.user_metadata as any)?.role ?? "buyer",
+        businessName: (u.user_metadata as any)?.businessName ?? null,
+      };
+    },
+    onSuccess: (u) => {
+      setUser(u);
+      toast({ title: "Welcome back!", description: "You have been successfully logged in." });
+    },
+    onError: (error) => {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
-    },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
+  const registerMutation = useMutation<SelectUser, Error, RegisterData>({
+    mutationFn: async ({ email, password, username, role, businessName }) => {
+      // Sign up and store extra fields in user_metadata
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username, role, businessName: businessName ?? null },
+        },
       });
+      if (error) throw new Error(error.message);
+      const u = data.user!;
+      return {
+        id: u.id,
+        email: u.email,
+        username: (u.user_metadata as any)?.username ?? username ?? null,
+        role: (u.user_metadata as any)?.role ?? role ?? "buyer",
+        businessName:
+          (u.user_metadata as any)?.businessName ?? businessName ?? null,
+      };
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
-    },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (u) => {
+      setUser(u);
       toast({
         title: "Welcome to Artisans Market!",
         description: "Your account has been created successfully.",
       });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error) => {
+      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      const { error } = await supabase.auth.signOut();
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.clear();
-      toast({
-        title: "Goodbye!",
-        description: "You have been successfully logged out.",
-      });
+      setUser(null);
+      toast({ title: "Goodbye!", description: "You have been successfully logged out." });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error) => {
+      toast({ title: "Logout failed", description: error.message, variant: "destructive" });
     },
   });
 
-  const switchRoleMutation = useMutation({
-    mutationFn: async ({ role }: { role: string }) => {
-      const res = await apiRequest("PATCH", "/api/user/role", { role });
-      return await res.json();
-    },
-    onSuccess: (updatedUser: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], updatedUser);
-      toast({
-        title: "Role switched!",
-        description: `You are now acting as a ${updatedUser.role}.`,
+  const switchRoleMutation = useMutation<SelectUser, Error, { role: string }>({
+    mutationFn: async ({ role }) => {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { role },
       });
+      if (error) throw new Error(error.message);
+      const u = data.user!;
+      return {
+        id: u.id,
+        email: u.email,
+        username: (u.user_metadata as any)?.username ?? null,
+        role: (u.user_metadata as any)?.role ?? "buyer",
+        businessName: (u.user_metadata as any)?.businessName ?? null,
+      };
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Role switch failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onSuccess: (u) => {
+      setUser(u);
+      toast({ title: "Role switched!", description: `You are now acting as a ${u.role}.` });
+    },
+    onError: (error) => {
+      toast({ title: "Role switch failed", description: error.message, variant: "destructive" });
     },
   });
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user: user ?? null,
-        isLoading,
-        error,
-        loginMutation,
-        logoutMutation,
-        registerMutation,
-        switchRoleMutation,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo<AuthContextType>(() => ({
+    user,
+    isLoading,
+    error: hookError,
+    loginMutation,
+    logoutMutation,
+    registerMutation,
+    switchRoleMutation,
+  }), [user, isLoading, hookError, loginMutation, logoutMutation, registerMutation, switchRoleMutation]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
 }
